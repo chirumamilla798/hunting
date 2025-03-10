@@ -5,28 +5,93 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chase Game</title>
     <style>
-        body { text-align: center; }
-        canvas { background-image: url("bg2.png"); display: block; margin: auto; }
+        body { 
+            text-align: center; 
+            margin: 0;
+            touch-action: none;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        canvas { 
+            background-image: url("bg2.png");
+            display: block; 
+            margin: auto;
+            max-width: 100%;
+            max-height: 100vh;
+        }
+        #mobileControls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+        }
+        .control-btn {
+            width: 60px;
+            height: 60px;
+            margin: 5px;
+            border-radius: 30px;
+            background: rgba(255,255,255,0.5);
+            border: 2px solid #333;
+            font-size: 24px;
+        }
     </style>
 </head>
 <body>
     <canvas id="gameCanvas" width="1200" height="600"></canvas>
+    <div id="mobileControls">
+        <button class="control-btn" id="upBtn">↑</button><br>
+        <button class="control-btn" id="leftBtn">←</button>
+        <button class="control-btn" id="rightBtn">→</button><br>
+        <button class="control-btn" id="downBtn">↓</button>
+    </div>
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
+        const mobileControls = document.getElementById("mobileControls");
 
-        const player1 = { x: 50, y: 50, size: 100, speed: 4, image: new Image(), score: 0 };
-        const player2 = { x: 300, y: 200, size: 200, speed: 2, image: new Image() };
+        // Show mobile controls on touch devices
+        if ('ontouchstart' in window) {
+            mobileControls.style.display = 'block';
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight * 0.7;
+        }
+
+        const player1 = { x: 50, y: 50, size: 100, speed: 5, image: new Image(), score: 0 };
+        const player2 = { x: 300, y: 200, size:200, speed: 2, image: new Image() };
         player1.image.src = "dear.png";
         player2.image.src = "loin1.png";
 
         let keys = {};
         let gameRunning = true;
         let startTime = Date.now();
-        const gameDuration = 10 * 60 * 1000; // 10 minutes
+        const gameDuration = 10 * 60 * 1000;
 
+        // Keyboard controls
         document.addEventListener("keydown", (e) => keys[e.code] = true);
         document.addEventListener("keyup", (e) => keys[e.code] = false);
+
+        // Mobile controls
+        const buttons = {
+            upBtn: "ArrowUp",
+            downBtn: "ArrowDown",
+            leftBtn: "ArrowLeft",
+            rightBtn: "ArrowRight"
+        };
+
+        Object.keys(buttons).forEach(btnId => {
+            const btn = document.getElementById(btnId);
+            btn.addEventListener("touchstart", (e) => {
+                e.preventDefault();
+                keys[buttons[btnId]] = true;
+            });
+            btn.addEventListener("touchend", (e) => {
+                e.preventDefault();
+                keys[buttons[btnId]] = false;
+            });
+        });
 
         function movePlayer1() {
             if (keys["ArrowUp"]) player1.y -= player1.speed;
@@ -69,16 +134,24 @@
             checkCollision();
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
+
             ctx.drawImage(player1.image, player1.x, player1.y, player1.size, player1.size);
             ctx.drawImage(player2.image, player2.x, player2.y, player2.size, player2.size);
-            
+
             ctx.fillStyle = "red";
             ctx.font = "20px Arial";
             ctx.fillText("Score: " + player1.score, 10, 20);
 
             requestAnimationFrame(gameLoop);
         }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if ('ontouchstart' in window) {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight * 0.7;
+            }
+        });
 
         gameLoop();
     </script>
